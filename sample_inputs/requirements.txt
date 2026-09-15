@@ -1,0 +1,29 @@
+TEST 01 - Appointment Booking
+Build an appointment booking system where patients can register, login, search doctors and book appointments.
+
+TEST 02 - Todo Application
+Build a todo application where users can register, login, create tasks, mark tasks completed and delete tasks.
+
+TEST 03 - E-commerce Store
+Build an online store where customers can browse products, add products to a cart and place orders.
+
+TEST 04 - Employee Leave System
+Build an employee leave management system where employees can submit leave requests and managers can approve or reject them.
+
+TEST 05 - Restaurant Reservation
+Create a restaurant reservation system where customers can view available tables and book a table.
+
+TEST 06 - School Management
+Build a school management system for maintaining student records, teacher records and attendance.
+
+TEST 07 - CRM
+Create a CRM system where sales staff can add leads, update lead status and view customer information.
+
+TEST 08 - Food Delivery
+Build a food delivery application where users can browse restaurants, select food items and place an order.
+
+TEST 09 - Freelancer Marketplace
+Create a freelancer marketplace where clients can post jobs and freelancers can submit proposals.
+
+TEST 10 - Ambiguous Requirement / Hallucination Test
+I need an app like Uber. Make it modern and launch it quickly.
