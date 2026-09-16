@@ -37,14 +37,22 @@ Build the foundation of the system:
 - Test hallucination behavior
 - Document failures and limitations
 
-## Day 2 — Multimodal Inputs
+## Day 2 — Multimodal Requirement Analysis
 
-Planned:
+Completed:
 
-- Screenshot understanding
-- UI image analysis
-- Meeting notes
-- Additional multimodal inputs
+- Screenshot and UI image analysis
+- Image-only requirement generation
+- Combined text + image analysis
+- Qwen3-VL 2B Instruct integration through Ollama
+- Observed UI component extraction
+- Visible state detection
+- Evidence vs assumption separation
+- Open-question handling
+- Normalized multimodal requirement context
+- Pydantic validation
+- Local JSON repair for malformed vision-model output
+- Manual multimodal evaluation and hallucination testing
 
 ## Day 3 — Engineering Artifacts
 
@@ -106,3 +114,44 @@ Pydantic Schema Validation
 Validated Specification
         ↓
 Streamlit Result Dashboard
+
+
+---
+
+# Day 2 — Multimodal Requirement Analysis
+
+Day 2 extends DevFlow Copilot from text-only requirement generation to multimodal requirement analysis.
+
+The application now supports three input modes:
+
+- Text only
+- Image only
+- Text + Image
+
+## Day 2 Architecture
+
+```text
+Client Text / UI Screenshot
+          |
+          v
+      Streamlit UI
+          |
+     +----+----+
+     |         |
+     v         v
+Qwen3 1.7B   Qwen3-VL 2B Instruct
+Text Model    Vision Model
+     |         |
+     +----+----+
+          |
+          v
+Normalized Requirement Context
+          |
+          v
+Requirement Generation Service
+          |
+          v
+JSON + Pydantic Validation
+          |
+          v
+Structured Software Specification
