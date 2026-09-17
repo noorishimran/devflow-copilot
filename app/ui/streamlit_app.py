@@ -5,6 +5,7 @@ import streamlit as st
 
 from app.services.requirement_service import generate_specification
 from app.services.multimodal_service import generate_multimodal_specification
+from app.services.engineering_service import generate_engineering_artifacts
 
 
 st.set_page_config(
@@ -212,6 +213,8 @@ for key, default in {
     "specification": None,
     "image_evidence": None,
     "normalized_context": None,
+    "engineering_artifacts": None,
+    "engineering_error": None,
     "last_error": None,
 }.items():
     if key not in st.session_state:
@@ -240,7 +243,7 @@ with st.sidebar:
         </div>
         <div class="runtime-box">
             <div class="runtime-label">PROMPTS</div>
-            <div class="runtime-value">requirement_prompt_v2 + image_analysis_prompt_v1</div>
+            <div class="runtime-value">requirement_prompt_v2 + image_analysis_prompt_v1 + engineering_artifacts_prompt_v1</div>
         </div>
         <div class="runtime-box">
             <div class="runtime-label">EXECUTION</div>
@@ -255,18 +258,18 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.caption("Day 2 • Multimodal Requirement Analyzer")
+    st.caption("Day 3 • Engineering Artifacts + Multimodal Requirements")
 
 
 render_html(
     """
     <div class="hero">
-        <div class="hero-badge">DAY 2 • MULTIMODAL REQUIREMENT ANALYZER</div>
+        <div class="hero-badge">DAY 3 • ENGINEERING ARTIFACT GENERATOR</div>
         <h1>DevFlow Copilot</h1>
         <p>
-            Analyze client text, UI screenshots, or both. Extract visible UI evidence,
-            separate observations from assumptions, and generate a schema-validated
-            software specification using fully local models.
+            Analyze client text, UI screenshots, or both. Generate a schema-validated
+            software specification, then convert it into acceptance criteria,
+            implementation plans, QA test cases, and a developer implementation prompt.
         </p>
     </div>
     """
@@ -368,6 +371,8 @@ if generate_button:
     st.session_state.specification = None
     st.session_state.image_evidence = None
     st.session_state.normalized_context = None
+    st.session_state.engineering_artifacts = None
+    st.session_state.engineering_error = None
 
     try:
         if selected_mode == "text_only":
@@ -618,7 +623,267 @@ if result is not None:
         st.json(result.model_dump())
 
 
+
+# -------------------------------------------------------------------
+# Day 3 — Engineering Artifacts
+# -------------------------------------------------------------------
+
+if result is not None:
+    st.markdown("---")
+    st.markdown("## Day 3 — Engineering Artifacts")
+
+    render_html(
+        """
+        <div class="mode-note">
+            <b>Engineering-ready output:</b>
+            Convert the validated specification into acceptance criteria,
+            a technology-neutral implementation plan, QA test cases, and
+            a developer implementation prompt. Unsupported behavior is
+            rejected by the evidence-fidelity safety layer.
+        </div>
+        """
+    )
+
+    engineering_button = st.button(
+        "🛠 Generate Engineering Artifacts",
+        type="primary",
+        use_container_width=True,
+        key="generate_engineering_artifacts",
+    )
+
+    if engineering_button:
+        st.session_state.engineering_error = None
+        st.session_state.engineering_artifacts = None
+
+        try:
+            with st.spinner(
+                "Generating acceptance criteria, implementation plan, QA tests, "
+                "and developer prompt with local Qwen..."
+            ):
+                engineering_artifacts = generate_engineering_artifacts(
+                    result
+                )
+
+            st.session_state.engineering_artifacts = engineering_artifacts
+            st.success(
+                "Engineering artifacts generated, schema validated, "
+                "and evidence-fidelity checked."
+            )
+
+        except ValueError as exc:
+            st.session_state.engineering_error = (
+                f"Engineering Input Error: {exc}"
+            )
+
+        except RuntimeError as exc:
+            st.session_state.engineering_error = (
+                f"Engineering Generation Error: {exc}"
+            )
+
+        except Exception as exc:
+            st.session_state.engineering_error = (
+                f"Unexpected Engineering Error: {exc}"
+            )
+
+    if st.session_state.engineering_error:
+        st.error(st.session_state.engineering_error)
+
+
+engineering = st.session_state.engineering_artifacts
+
+if engineering is not None:
+    metric1, metric2, metric3, metric4 = st.columns(4)
+
+    metric1.metric(
+        "Acceptance Criteria",
+        len(engineering.acceptance_criteria),
+    )
+    metric2.metric(
+        "Implementation Steps",
+        len(engineering.implementation_plan),
+    )
+    metric3.metric(
+        "QA Test Cases",
+        len(engineering.qa_test_cases),
+    )
+    metric4.metric(
+        "Open Questions",
+        len(engineering.open_questions),
+    )
+
+    (
+        criteria_tab,
+        plan_tab,
+        qa_tab,
+        developer_tab,
+        engineering_review_tab,
+        engineering_json_tab,
+    ) = st.tabs(
+        [
+            "✅ Acceptance Criteria",
+            "🧭 Implementation Plan",
+            "🧪 QA Test Cases",
+            "💻 Developer Prompt",
+            "🔎 Review",
+            "🧾 Validated JSON",
+        ]
+    )
+
+    with criteria_tab:
+        st.markdown("### Acceptance Criteria")
+
+        if engineering.acceptance_criteria:
+            for criterion in engineering.acceptance_criteria:
+                render_html(
+                    f"""
+                    <div class="section-card">
+                        <b>{safe(criterion.id)} • {safe(criterion.feature)}</b>
+                        <br><br>
+                        <b>Given:</b> {safe(criterion.given)}
+                        <br>
+                        <b>When:</b> {safe(criterion.when)}
+                        <br>
+                        <b>Then:</b> {safe(criterion.then)}
+                    </div>
+                    """
+                )
+        else:
+            st.info(
+                "No safe acceptance criteria were returned. "
+                "Missing behavior may have been moved to open questions."
+            )
+
+    with plan_tab:
+        st.markdown("### Implementation Plan")
+
+        if engineering.implementation_plan:
+            for step in engineering.implementation_plan:
+                render_html(
+                    f"""
+                    <div class="section-card">
+                        <b>Step {step.step_number}: {safe(step.title)}</b>
+                        <br><br>
+                        {safe(step.description)}
+                    </div>
+                    """
+                )
+
+                if step.files_or_components:
+                    st.markdown("**Files / Components**")
+                    for item in step.files_or_components:
+                        st.write(f"- {item}")
+
+                if step.dependencies:
+                    st.markdown("**Dependencies**")
+                    for item in step.dependencies:
+                        st.write(f"- {item}")
+        else:
+            st.info("No safe implementation steps were returned.")
+
+    with qa_tab:
+        st.markdown("### QA Test Cases")
+
+        if engineering.qa_test_cases:
+            for test_case in engineering.qa_test_cases:
+                render_html(
+                    f"""
+                    <div class="section-card">
+                        <b>{safe(test_case.test_id)} • {safe(test_case.title)}</b>
+                        <br>
+                        <span class="priority-medium">{safe(test_case.test_type.upper())}</span>
+                        <br><br>
+                        <b>Expected Result:</b> {safe(test_case.expected_result)}
+                    </div>
+                    """
+                )
+
+                if test_case.preconditions:
+                    st.markdown("**Preconditions**")
+                    for item in test_case.preconditions:
+                        st.write(f"- {item}")
+
+                st.markdown("**Steps**")
+                for index, item in enumerate(test_case.steps, start=1):
+                    st.write(f"{index}. {item}")
+        else:
+            st.info(
+                "No safe QA test cases were returned. "
+                "Unsupported generated tests may have been removed by the safety layer."
+            )
+
+    with developer_tab:
+        st.markdown("### Developer Implementation Prompt")
+
+        render_html(
+            f"""
+            <div class="summary-card">
+                <b>Objective</b><br><br>
+                {safe(engineering.developer_prompt.objective)}
+            </div>
+            """
+        )
+
+        st.markdown("#### Implementation Instructions")
+        for instruction in engineering.developer_prompt.implementation_instructions:
+            st.write(f"- {instruction}")
+
+        st.markdown("#### Constraints")
+        if engineering.developer_prompt.constraints:
+            for constraint in engineering.developer_prompt.constraints:
+                st.warning(constraint)
+        else:
+            st.info("No additional constraints returned.")
+
+        st.markdown("#### Unknowns")
+        if engineering.developer_prompt.unknowns:
+            for unknown in engineering.developer_prompt.unknowns:
+                st.info(unknown)
+        else:
+            st.success("No developer unknowns returned.")
+
+    with engineering_review_tab:
+        assumption_col, question_col = st.columns(2, gap="large")
+
+        with assumption_col:
+            st.markdown("### Assumptions")
+            if engineering.assumptions:
+                for assumption in engineering.assumptions:
+                    st.warning(assumption)
+            else:
+                render_html(
+                    '<div class="empty-box">✓ No engineering assumptions returned.</div>'
+                )
+
+        with question_col:
+            st.markdown("### Open Questions")
+            if engineering.open_questions:
+                for question in engineering.open_questions:
+                    st.info(question)
+            else:
+                render_html(
+                    '<div class="empty-box">No engineering open questions returned.</div>'
+                )
+
+        st.markdown("### Safety Status")
+        st.success(
+            "Output passed schema validation and the Day 3 "
+            "evidence-fidelity safety check."
+        )
+        st.warning(
+            "Draft — human review is still required before implementation."
+        )
+
+    with engineering_json_tab:
+        st.markdown("### Schema-Validated Engineering Output")
+        st.caption(
+            "This JSON passed the EngineeringArtifacts Pydantic schema "
+            "and the evidence-fidelity safety layer."
+        )
+        st.json(engineering.model_dump())
+
+
 st.markdown("---")
 st.caption(
-    "MoinSystems AI • DevFlow Copilot • Day 2 Multimodal Local-first GenAI Internship MVP"
+    "MoinSystems AI • DevFlow Copilot • Day 3 Engineering Artifacts + "
+    "Multimodal Local-first GenAI Internship MVP"
 )

@@ -5,7 +5,10 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "qwen3:1.7b"
 
 
-def generate_with_ollama(prompt: str) -> str:
+def generate_with_ollama(
+    prompt: str,
+    num_predict: int = 500
+) -> str:
     payload = {
         "model": MODEL_NAME,
         "prompt": prompt,
@@ -14,7 +17,7 @@ def generate_with_ollama(prompt: str) -> str:
         "format": "json",
         "options": {
             "temperature": 0.2,
-            "num_predict": 500
+            "num_predict": num_predict
         }
     }
 

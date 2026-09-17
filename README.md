@@ -155,3 +155,67 @@ JSON + Pydantic Validation
           |
           v
 Structured Software Specification
+
+
+
+---
+
+# Day 3 — Engineering Artifacts
+
+## Status
+
+Day 3 implementation is complete.
+
+The validated software specification can now be converted into engineering-ready artifacts using a local Qwen model.
+
+Generated artifacts include:
+
+- Acceptance Criteria
+- Implementation Plan
+- QA Test Cases
+- Developer Implementation Prompt
+- Assumptions
+- Open Questions
+
+## Day 3 Pipeline
+
+```text
+Validated Project Specification
+        |
+        v
+Engineering Artifact Service
+        |
+        v
+Versioned Engineering Prompt
+        |
+        v
+Qwen3 1.7B via Ollama
+        |
+        v
+Structured JSON
+        |
+        v
+Pydantic Schema Validation
+        |
+        v
+Evidence-Fidelity Safety Guard
+        |
+        +---- Safe Output ----> Engineering Artifacts
+        |
+        +---- Unsafe Output
+                |
+                v
+        Automatic Correction Retry
+                |
+                v
+        Evidence-Fidelity Check
+                |
+                +---- Safe Output
+                |
+                +---- Still Unsafe
+                        |
+                        v
+                Deterministic Safe Fallback
+                        |
+                        v
+                Human-Reviewable Output
