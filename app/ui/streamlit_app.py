@@ -6,6 +6,7 @@ import streamlit as st
 from app.services.requirement_service import generate_specification
 from app.services.multimodal_service import generate_multimodal_specification
 from app.services.engineering_service import generate_engineering_artifacts
+from app.services.evaluation_service import evaluate_reliability
 
 
 st.set_page_config(
@@ -215,6 +216,8 @@ for key, default in {
     "normalized_context": None,
     "engineering_artifacts": None,
     "engineering_error": None,
+    "reliability_report": None,
+    "reliability_error": None,
     "last_error": None,
 }.items():
     if key not in st.session_state:
@@ -250,6 +253,10 @@ with st.sidebar:
             <div class="runtime-value">Local-only</div>
         </div>
         <div class="runtime-box">
+            <div class="runtime-label">EVALUATION</div>
+            <div class="runtime-value">Deterministic Reliability Rules</div>
+        </div>
+        <div class="runtime-box">
             <div class="runtime-label">PAID API</div>
             <div class="runtime-value">None</div>
         </div>
@@ -258,18 +265,18 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.caption("Day 3 • Engineering Artifacts + Multimodal Requirements")
+    st.caption("Day 4 • Reliability Evaluation + Engineering Artifacts")
 
 
 render_html(
     """
     <div class="hero">
-        <div class="hero-badge">DAY 3 • ENGINEERING ARTIFACT GENERATOR</div>
+        <div class="hero-badge">DAY 4 • RELIABILITY & EVALUATION</div>
         <h1>DevFlow Copilot</h1>
         <p>
             Analyze client text, UI screenshots, or both. Generate a schema-validated
-            software specification, then convert it into acceptance criteria,
-            implementation plans, QA test cases, and a developer implementation prompt.
+            specification and engineering artifacts, then score reliability using
+            deterministic checks for fidelity, coverage, question quality, and traceability.
         </p>
     </div>
     """
@@ -373,6 +380,8 @@ if generate_button:
     st.session_state.normalized_context = None
     st.session_state.engineering_artifacts = None
     st.session_state.engineering_error = None
+    st.session_state.reliability_report = None
+    st.session_state.reliability_error = None
 
     try:
         if selected_mode == "text_only":
@@ -654,6 +663,8 @@ if result is not None:
     if engineering_button:
         st.session_state.engineering_error = None
         st.session_state.engineering_artifacts = None
+        st.session_state.reliability_report = None
+        st.session_state.reliability_error = None
 
         try:
             with st.spinner(
@@ -882,8 +893,189 @@ if engineering is not None:
         st.json(engineering.model_dump())
 
 
+
+# -------------------------------------------------------------------
+# Day 4 — Reliability & Evaluation
+# -------------------------------------------------------------------
+
+if result is not None and engineering is not None:
+    st.markdown("---")
+    st.markdown("## Day 4 — Reliability & Evaluation")
+
+    render_html(
+        """
+        <div class="mode-note">
+            <b>Deterministic reliability evaluation:</b>
+            Score the generated engineering artifacts without asking the LLM to grade itself.
+            The evaluator checks schema validity, evidence fidelity, requirement coverage,
+            open-question quality, and feature traceability.
+        </div>
+        """
+    )
+
+    reliability_button = st.button(
+        "📊 Run Reliability Evaluation",
+        type="primary",
+        use_container_width=True,
+        key="run_reliability_evaluation",
+    )
+
+    if reliability_button:
+        st.session_state.reliability_error = None
+        st.session_state.reliability_report = None
+
+        try:
+            with st.spinner("Running deterministic reliability checks..."):
+                reliability_report = evaluate_reliability(
+                    result,
+                    engineering,
+                )
+
+            st.session_state.reliability_report = reliability_report
+            st.success("Reliability evaluation completed successfully.")
+
+        except ValueError as exc:
+            st.session_state.reliability_error = (
+                f"Reliability Input Error: {exc}"
+            )
+
+        except RuntimeError as exc:
+            st.session_state.reliability_error = (
+                f"Reliability Evaluation Error: {exc}"
+            )
+
+        except Exception as exc:
+            st.session_state.reliability_error = (
+                f"Unexpected Reliability Error: {exc}"
+            )
+
+    if st.session_state.reliability_error:
+        st.error(st.session_state.reliability_error)
+
+
+reliability = st.session_state.reliability_report
+
+if reliability is not None:
+    summary1, summary2, summary3, summary4 = st.columns(4)
+
+    summary1.metric(
+        "Overall Reliability",
+        f"{reliability.overall_score}/100",
+    )
+    summary2.metric(
+        "Overall Status",
+        reliability.overall_status.upper(),
+    )
+    summary3.metric(
+        "Regression Flags",
+        len(reliability.regression_flags),
+    )
+    summary4.metric(
+        "Human Review",
+        "Required" if reliability.human_review_required else "Not Required",
+    )
+
+    if reliability.overall_status == "pass":
+        st.success(
+            f"Reliability status: PASS ({reliability.overall_score}/100)"
+        )
+    elif reliability.overall_status == "partial":
+        st.warning(
+            f"Reliability status: PARTIAL ({reliability.overall_score}/100)"
+        )
+    else:
+        st.error(
+            f"Reliability status: FAIL ({reliability.overall_score}/100)"
+        )
+
+    st.markdown("### Reliability Metrics")
+
+    metric_columns = st.columns(len(reliability.metrics))
+
+    for column, metric in zip(metric_columns, reliability.metrics):
+        with column:
+            st.metric(
+                metric.name.replace("_", " ").title(),
+                f"{metric.score}/100",
+            )
+
+            if metric.status == "pass":
+                st.success("PASS")
+            elif metric.status == "partial":
+                st.warning("PARTIAL")
+            else:
+                st.error("FAIL")
+
+    (
+        reliability_details_tab,
+        reliability_issues_tab,
+        reliability_json_tab,
+    ) = st.tabs(
+        [
+            "📈 Metric Details",
+            "🚨 Issues & Regression",
+            "🧾 Reliability JSON",
+        ]
+    )
+
+    with reliability_details_tab:
+        for metric in reliability.metrics:
+            render_html(
+                f"""
+                <div class="section-card">
+                    <b>{safe(metric.name.replace("_", " ").title())}</b>
+                    <br><br>
+                    <b>Score:</b> {metric.score}/100
+                    <br>
+                    <b>Status:</b> {safe(metric.status.upper())}
+                </div>
+                """
+            )
+
+            if metric.findings:
+                for finding in metric.findings:
+                    st.write(f"- {finding}")
+            else:
+                st.info("No findings returned for this metric.")
+
+    with reliability_issues_tab:
+        issue_col, regression_col = st.columns(2, gap="large")
+
+        with issue_col:
+            st.markdown("### Detected Issues")
+            if reliability.detected_issues:
+                for issue in reliability.detected_issues:
+                    st.warning(issue)
+            else:
+                st.success("No reliability issues detected.")
+
+        with regression_col:
+            st.markdown("### Regression Flags")
+            if reliability.regression_flags:
+                for flag in reliability.regression_flags:
+                    st.error(flag.replace("_", " ").title())
+            else:
+                st.success("No regression flags detected.")
+
+        st.markdown("### Human Review")
+        if reliability.human_review_required:
+            st.warning(
+                "Human review is required before implementation or approval."
+            )
+        else:
+            st.success("Human review is not required.")
+
+    with reliability_json_tab:
+        st.markdown("### Reliability Report")
+        st.caption(
+            "This report is produced by deterministic evaluation rules, "
+            "not by an LLM self-score."
+        )
+        st.json(reliability.model_dump())
+
+
 st.markdown("---")
 st.caption(
-    "MoinSystems AI • DevFlow Copilot • Day 3 Engineering Artifacts + "
-    "Multimodal Local-first GenAI Internship MVP"
+    "MoinSystems AI • DevFlow Copilot • Day 4 Reliability Evaluation + "
+    "Engineering Artifacts + Multimodal Local-first GenAI Internship MVP"
 )
