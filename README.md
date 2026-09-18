@@ -219,3 +219,40 @@ Evidence-Fidelity Safety Guard
                         |
                         v
                 Human-Reviewable Output
+
+
+
+# Day 4 — Reliability & Evaluation
+
+Day 4 adds a deterministic reliability evaluation layer on top of the generated software specification and engineering artifacts.
+
+## Reliability Metrics
+
+The evaluator checks:
+
+- Schema Validity
+- Evidence Fidelity
+- Requirement Coverage
+- Open Question Quality
+- Feature Traceability
+- Regression Flags
+
+The reliability score is generated using deterministic rules rather than asking the LLM to evaluate itself.
+
+## Day 4 Test Result
+
+Final end-to-end UI evaluation:
+
+- Overall Reliability: 95/100
+- Overall Status: PASS
+- Schema Validity: 100/100
+- Evidence Fidelity: 100/100
+- Requirement Coverage: 94/100
+- Open Question Quality: 100/100
+- Traceability: 80/100
+- Regression Flags: 0
+- Human Review Required: True
+
+Automated regression suite:
+
+- 10 tests passed
