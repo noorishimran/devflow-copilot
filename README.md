@@ -256,3 +256,121 @@ Final end-to-end UI evaluation:
 Automated regression suite:
 
 - 10 tests passed
+
+
+---
+
+## Day 5 — Integrated DevFlow Copilot MVP
+
+Day 5 completes the end-to-end local-first GenAI workflow by adding mandatory human review and final export controls.
+
+### Final Workflow
+
+Client Text / Screenshot  
+↓  
+Validated Project Specification  
+↓  
+Engineering Artifacts  
+↓  
+Deterministic Reliability Evaluation  
+↓  
+Human Review  
+↓  
+Approve / Needs Edit / Reject / Regenerate  
+↓  
+Approved JSON + Markdown Export
+
+### Human Review Workflow
+
+The final artifact package supports four review actions:
+
+- Approve
+- Needs Edit
+- Reject
+- Regenerate
+
+Artifacts remain in `draft` status until explicitly reviewed by a human.
+
+Final JSON and Markdown exports remain locked until the current artifact set is approved.
+
+When regeneration is requested, engineering artifacts are generated again and the deterministic reliability evaluation is rerun before another human approval.
+
+### Export
+
+Approved project packages can be exported as:
+
+- JSON
+- Markdown
+
+The exported package contains:
+
+- Project specification
+- Engineering artifacts
+- Reliability report
+- Human review status and history
+
+### Reliability
+
+The reliability layer is deterministic and does not ask the LLM to score itself.
+
+Current checks include:
+
+- Schema validity
+- Evidence fidelity
+- Requirement coverage
+- Open-question quality
+- Traceability
+
+### Final Testing
+
+Automated test suite:
+
+`python -m pytest -v`
+
+Final result:
+
+`18 passed`
+
+A complete manual end-to-end test was also completed successfully:
+
+Requirement  
+→ Specification  
+→ Engineering Artifacts  
+→ Reliability Evaluation  
+→ Human Approval  
+→ JSON / Markdown Export
+
+Manual end-to-end test result: PASS
+
+See:
+
+`tests/day5_test_results.md`
+
+### Current Local Models
+
+- Text model: Qwen3 1.7B
+- Vision model: Qwen3-VL 2B Instruct
+- Runtime: Ollama
+- Execution: Local-first
+- Paid API required: No
+
+### Final MVP Status
+
+The DevFlow Copilot MVP now supports:
+
+- Text requirement analysis
+- Screenshot / multimodal requirement analysis
+- Schema-validated specifications
+- User stories
+- Acceptance criteria
+- Implementation plans
+- QA test cases
+- Developer implementation prompts
+- Evidence-fidelity safeguards
+- Deterministic reliability evaluation
+- Human review states
+- Approve / Edit / Reject / Regenerate workflow
+- JSON export
+- Markdown export
+
+Human review remains mandatory before final approval and export.
