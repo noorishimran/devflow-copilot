@@ -3,6 +3,9 @@ from textwrap import dedent
 
 import streamlit as st
 
+from app.schemas.review import ArtifactReview, ReviewAction, ReviewStatus
+from app.services.review_service import apply_review_action
+from app.services.export_service import export_as_json, export_as_markdown
 from app.services.requirement_service import generate_specification
 from app.services.multimodal_service import generate_multimodal_specification
 from app.services.engineering_service import generate_engineering_artifacts
@@ -218,6 +221,8 @@ for key, default in {
     "engineering_error": None,
     "reliability_report": None,
     "reliability_error": None,
+    "artifact_review": ArtifactReview(),
+    "review_message": None,
     "last_error": None,
 }.items():
     if key not in st.session_state:
@@ -257,6 +262,10 @@ with st.sidebar:
             <div class="runtime-value">Deterministic Reliability Rules</div>
         </div>
         <div class="runtime-box">
+            <div class="runtime-label">FINAL WORKFLOW</div>
+            <div class="runtime-value">Human Review + JSON/Markdown Export</div>
+        </div>
+        <div class="runtime-box">
             <div class="runtime-label">PAID API</div>
             <div class="runtime-value">None</div>
         </div>
@@ -265,18 +274,18 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.caption("Day 4 • Reliability Evaluation + Engineering Artifacts")
+    st.caption("Day 5 • Integrated DevFlow Copilot MVP")
 
 
 render_html(
     """
     <div class="hero">
-        <div class="hero-badge">DAY 4 • RELIABILITY & EVALUATION</div>
+        <div class="hero-badge">DAY 5 • INTEGRATED DEVFLOW COPILOT MVP</div>
         <h1>DevFlow Copilot</h1>
         <p>
-            Analyze client text, UI screenshots, or both. Generate a schema-validated
-            specification and engineering artifacts, then score reliability using
-            deterministic checks for fidelity, coverage, question quality, and traceability.
+            Turn client text and UI screenshots into a schema-validated specification,
+            engineering artifacts, a deterministic reliability report, and a human-reviewed
+            export package — fully local and without a paid API.
         </p>
     </div>
     """
@@ -382,6 +391,8 @@ if generate_button:
     st.session_state.engineering_error = None
     st.session_state.reliability_report = None
     st.session_state.reliability_error = None
+    st.session_state.artifact_review = ArtifactReview()
+    st.session_state.review_message = None
 
     try:
         if selected_mode == "text_only":
@@ -665,6 +676,8 @@ if result is not None:
         st.session_state.engineering_artifacts = None
         st.session_state.reliability_report = None
         st.session_state.reliability_error = None
+        st.session_state.artifact_review = ArtifactReview()
+        st.session_state.review_message = None
 
         try:
             with st.spinner(
@@ -923,6 +936,8 @@ if result is not None and engineering is not None:
     if reliability_button:
         st.session_state.reliability_error = None
         st.session_state.reliability_report = None
+        st.session_state.artifact_review = ArtifactReview()
+        st.session_state.review_message = None
 
         try:
             with st.spinner("Running deterministic reliability checks..."):
@@ -1074,8 +1089,252 @@ if reliability is not None:
         st.json(reliability.model_dump())
 
 
+
+# -------------------------------------------------------------------
+# Day 5 — Human Review, Regeneration & Final Export
+# -------------------------------------------------------------------
+
+if result is not None and engineering is not None and reliability is not None:
+    st.markdown("---")
+    st.markdown("## Day 5 — Human Review & Final Export")
+
+    render_html(
+        """
+        <div class="mode-note">
+            <b>Mandatory human review:</b>
+            Review the specification, engineering artifacts, and reliability report
+            before approval. Final JSON and Markdown exports remain locked until the
+            current artifact set is explicitly approved.
+        </div>
+        """
+    )
+
+    review = st.session_state.artifact_review
+
+    status_col, reliability_col, note_col = st.columns(
+        [1, 1, 2],
+        gap="large",
+    )
+
+    with status_col:
+        st.metric(
+            "Review Status",
+            review.status.value.replace("_", " ").title(),
+        )
+
+    with reliability_col:
+        st.metric(
+            "Reliability",
+            f"{reliability.overall_score}/100",
+        )
+
+    with note_col:
+        reviewer_notes = st.text_area(
+            "Reviewer Notes",
+            value=review.reviewer_notes,
+            placeholder=(
+                "Add approval notes, required edits, rejection reasons, "
+                "or regeneration guidance..."
+            ),
+            key="day5_reviewer_notes",
+            height=100,
+        )
+
+    approve_col, edit_col, reject_col, regenerate_col = st.columns(4)
+
+    selected_review_action = None
+
+    with approve_col:
+        if st.button(
+            "✅ Approve",
+            use_container_width=True,
+            key="day5_approve",
+        ):
+            selected_review_action = ReviewAction.APPROVE
+
+    with edit_col:
+        if st.button(
+            "✏️ Needs Edit",
+            use_container_width=True,
+            key="day5_edit",
+        ):
+            selected_review_action = ReviewAction.EDIT
+
+    with reject_col:
+        if st.button(
+            "❌ Reject",
+            use_container_width=True,
+            key="day5_reject",
+        ):
+            selected_review_action = ReviewAction.REJECT
+
+    with regenerate_col:
+        if st.button(
+            "🔄 Regenerate",
+            use_container_width=True,
+            key="day5_regenerate",
+        ):
+            selected_review_action = ReviewAction.REGENERATE
+
+    if selected_review_action is not None:
+        updated_review, review_result = apply_review_action(
+            review,
+            selected_review_action,
+            reviewer_notes,
+        )
+
+        st.session_state.artifact_review = updated_review
+        st.session_state.review_message = review_result.message
+
+        if selected_review_action == ReviewAction.REGENERATE:
+            try:
+                with st.spinner(
+                    "Regenerating engineering artifacts and rerunning reliability checks..."
+                ):
+                    regenerated_engineering = generate_engineering_artifacts(
+                        result
+                    )
+
+                    regenerated_reliability = evaluate_reliability(
+                        result,
+                        regenerated_engineering,
+                    )
+
+                st.session_state.engineering_artifacts = regenerated_engineering
+                st.session_state.reliability_report = regenerated_reliability
+                st.session_state.engineering_error = None
+                st.session_state.reliability_error = None
+
+                st.success(
+                    "Artifacts regenerated and reliability re-evaluated. "
+                    "Human approval is required again."
+                )
+
+                st.rerun()
+
+            except ValueError as exc:
+                st.error(
+                    f"Regeneration Input Error: {exc}"
+                )
+
+            except RuntimeError as exc:
+                st.error(
+                    f"Regeneration Error: {exc}"
+                )
+
+            except Exception as exc:
+                st.error(
+                    f"Unexpected Regeneration Error: {exc}"
+                )
+
+        else:
+            review = updated_review
+
+            if selected_review_action == ReviewAction.APPROVE:
+                st.success(review_result.message)
+
+            elif selected_review_action == ReviewAction.REJECT:
+                st.error(review_result.message)
+
+            else:
+                st.warning(review_result.message)
+
+    review = st.session_state.artifact_review
+
+    if st.session_state.review_message:
+        st.caption(
+            f"Latest review action: {st.session_state.review_message}"
+        )
+
+    st.markdown("### Review History")
+
+    if review.action_history:
+        for index, history_item in enumerate(
+            review.action_history,
+            start=1,
+        ):
+            st.write(
+                f"{index}. {history_item}"
+            )
+    else:
+        st.info(
+            "No human review actions have been recorded yet."
+        )
+
+    st.markdown("### Final Export")
+
+    if review.status == ReviewStatus.APPROVED:
+        try:
+            json_export = export_as_json(
+                result,
+                engineering,
+                reliability,
+                review,
+            )
+
+            markdown_export = export_as_markdown(
+                result,
+                engineering,
+                reliability,
+                review,
+            )
+
+            export_col1, export_col2 = st.columns(
+                2,
+                gap="large",
+            )
+
+            with export_col1:
+                st.download_button(
+                    "⬇️ Download JSON Package",
+                    data=json_export,
+                    file_name="devflow_engineering_package.json",
+                    mime="application/json",
+                    use_container_width=True,
+                    key="day5_json_download",
+                )
+
+            with export_col2:
+                st.download_button(
+                    "⬇️ Download Markdown Package",
+                    data=markdown_export,
+                    file_name="devflow_engineering_package.md",
+                    mime="text/markdown",
+                    use_container_width=True,
+                    key="day5_markdown_download",
+                )
+
+            st.success(
+                "Current artifacts are human-approved. "
+                "Final JSON and Markdown exports are unlocked."
+            )
+
+        except Exception as exc:
+            st.error(
+                f"Export Error: {exc}"
+            )
+
+    elif review.status == ReviewStatus.NEEDS_EDIT:
+        st.warning(
+            "Export locked: artifacts are marked as Needs Edit. "
+            "Review the notes, update/regenerate the artifacts, and approve them before export."
+        )
+
+    elif review.status == ReviewStatus.REJECTED:
+        st.error(
+            "Export locked: artifacts were rejected. "
+            "Regenerate or revise them before requesting approval again."
+        )
+
+    else:
+        st.warning(
+            "Export locked: artifacts are still in Draft status. "
+            "A human reviewer must approve the current artifact set first."
+        )
+
+
 st.markdown("---")
 st.caption(
-    "MoinSystems AI • DevFlow Copilot • Day 4 Reliability Evaluation + "
-    "Engineering Artifacts + Multimodal Local-first GenAI Internship MVP"
+    "MoinSystems AI • DevFlow Copilot • Day 5 Integrated Local-first GenAI MVP • "
+    "Multimodal Requirements • Engineering Artifacts • Reliability • Human Review • Export"
 )
