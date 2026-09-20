@@ -22,181 +22,73 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+    :root {
+        --bg:#f6f8fc; --surface:#ffffff; --text:#0f172a; --muted:#64748b;
+        --line:#e2e8f0; --brand:#5b5cf0; --brand2:#7c3aed;
+    }
+    html, body, [class*="css"] {font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
     .stApp {
+        color:var(--text);
         background:
-            radial-gradient(circle at top right, #eef2ff 0%, transparent 25%),
-            #f8fafc;
+            radial-gradient(circle at 92% 4%, rgba(99,102,241,.14), transparent 26%),
+            radial-gradient(circle at 7% 22%, rgba(14,165,233,.08), transparent 22%),
+            linear-gradient(180deg,#fbfcff 0%,var(--bg) 100%);
     }
-    .block-container {
-        max-width: 1250px;
-        padding-top: 2rem;
-        padding-bottom: 4rem;
-    }
+    .block-container {max-width:1320px; padding:1.6rem 2.1rem 5rem 2.1rem;}
+    #MainMenu, footer, [data-testid="stToolbar"] {visibility:hidden;}
+    header[data-testid="stHeader"] {background:transparent;}
     section[data-testid="stSidebar"] {
-        background: #111827;
+        background:radial-gradient(circle at 30% 0%,rgba(99,102,241,.22),transparent 30%),linear-gradient(180deg,#0f172a 0%,#111827 58%,#0b1120 100%);
+        border-right:1px solid rgba(148,163,184,.16);
     }
-    section[data-testid="stSidebar"] * {
-        color: #f9fafb;
-    }
+    section[data-testid="stSidebar"] * {color:#f8fafc;}
+    section[data-testid="stSidebar"] hr {border-color:rgba(255,255,255,.08);}
     .hero {
-        padding: 32px 36px;
-        border-radius: 22px;
-        background: linear-gradient(135deg, #111827 0%, #1f2937 55%, #312e81 100%);
-        color: white;
-        margin-bottom: 24px;
-        box-shadow: 0 12px 35px rgba(15, 23, 42, 0.15);
+        position:relative; overflow:hidden; padding:38px 40px; border-radius:26px;
+        background:radial-gradient(circle at 92% 18%,rgba(129,140,248,.30),transparent 27%),linear-gradient(135deg,#0f172a 0%,#1e293b 47%,#3730a3 100%);
+        color:white; margin-bottom:18px; box-shadow:0 20px 55px rgba(15,23,42,.18);
+        border:1px solid rgba(255,255,255,.08);
     }
-    .hero-badge {
-        display: inline-block;
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.18);
-        padding: 6px 12px;
-        border-radius: 999px;
-        font-size: 13px;
-        margin-bottom: 14px;
+    .hero::after {content:""; position:absolute; width:260px; height:260px; right:-70px; bottom:-140px; border-radius:50%; border:1px solid rgba(255,255,255,.10); box-shadow:0 0 0 34px rgba(255,255,255,.035),0 0 0 68px rgba(255,255,255,.022);}
+    .hero-badge {display:inline-flex; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.15); padding:7px 12px; border-radius:999px; font-size:12px; font-weight:750; letter-spacing:.35px; margin-bottom:16px;}
+    .hero h1 {margin:0; font-size:clamp(34px,5vw,52px); line-height:1.02; font-weight:850; letter-spacing:-1.8px;}
+    .hero p {margin:14px 0 18px 0; color:#dbe4f0; font-size:16px; line-height:1.65; max-width:880px;}
+    .hero-meta {display:flex; flex-wrap:wrap; gap:9px; margin-top:16px;}
+    .hero-chip {display:inline-flex; padding:7px 11px; border-radius:10px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.11); color:#eef2ff; font-size:12px; font-weight:650;}
+    .workflow-strip {display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:0 0 22px 0;}
+    .workflow-step {padding:11px 8px; text-align:center; border-radius:12px; background:rgba(255,255,255,.80); border:1px solid var(--line); color:#475569; font-size:12px; font-weight:700; box-shadow:0 5px 18px rgba(15,23,42,.035);}
+    .section-card,.summary-card,.feature-card,.story-card,.evidence-card {backdrop-filter:blur(8px);}
+    .section-card {background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:18px; padding:20px 22px; box-shadow:0 7px 24px rgba(15,23,42,.045); margin-bottom:14px;}
+    .summary-card {background:linear-gradient(135deg,rgba(255,255,255,.96) 0%,rgba(238,242,255,.72) 100%); border:1px solid #dbe3ff; border-left:5px solid var(--brand); border-radius:18px; padding:22px 24px; margin-bottom:20px; box-shadow:0 8px 24px rgba(79,70,229,.055);}
+    .feature-card {background:rgba(255,255,255,.94); border:1px solid var(--line); border-radius:18px; padding:19px; min-height:150px; box-shadow:0 7px 22px rgba(15,23,42,.04); margin-bottom:12px; transition:.16s ease;}
+    .feature-card:hover,.story-card:hover,.section-card:hover {transform:translateY(-1px); box-shadow:0 11px 30px rgba(15,23,42,.07);}
+    .feature-title {font-size:16px; font-weight:800; margin-bottom:9px; color:#111827;}
+    .feature-description {color:#556274; font-size:14px; line-height:1.58; margin-top:11px;}
+    .priority-high,.priority-medium,.priority-low {display:inline-flex; padding:5px 9px; border-radius:999px; font-size:10px; font-weight:850; letter-spacing:.35px;}
+    .priority-high {background:#fee2e2; color:#991b1b;} .priority-medium {background:#fef3c7; color:#92400e;} .priority-low {background:#dcfce7; color:#166534;}
+    .story-card {background:rgba(255,255,255,.94); border:1px solid var(--line); border-radius:18px; padding:18px 20px; margin-bottom:12px; box-shadow:0 6px 20px rgba(15,23,42,.035); transition:.16s ease;}
+    .story-id {color:var(--brand); font-size:11px; font-weight:850; letter-spacing:.8px;} .story-role {margin-top:8px; font-size:15px; font-weight:750; color:#111827;} .story-line {color:#526175; margin-top:6px; font-size:14px; line-height:1.55;}
+    .empty-box {background:rgba(248,250,252,.9); border:1px dashed #cbd5e1; border-radius:14px; padding:17px; color:#64748b;}
+    .draft-notice {background:linear-gradient(90deg,#fffbeb 0%,#fff7ed 100%); color:#92400e; border:1px solid #fed7aa; border-radius:14px; padding:13px 16px; font-size:13px; line-height:1.55; margin-bottom:14px;}
+    .runtime-box {background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.09); border-radius:14px; padding:13px 14px; margin-bottom:10px;}
+    .runtime-label {color:#94a3b8; font-size:10px; font-weight:800; letter-spacing:.65px; margin-bottom:4px;} .runtime-value {color:#f8fafc; font-weight:700; font-size:13px; line-height:1.45;}
+    .evidence-card {background:rgba(255,255,255,.94); border:1px solid #dbeafe; border-left:5px solid #3b82f6; border-radius:16px; padding:17px 19px; margin-bottom:12px; box-shadow:0 6px 20px rgba(37,99,235,.045);}
+    .mode-note {background:linear-gradient(90deg,#eef2ff 0%,#f5f3ff 100%); border:1px solid #d7dcff; border-radius:14px; padding:13px 16px; margin-bottom:15px; color:#3730a3; font-size:13px; line-height:1.55;}
+    div[data-testid="stMetric"] {background:rgba(255,255,255,.88); border:1px solid var(--line); border-radius:16px; padding:14px 16px; box-shadow:0 7px 20px rgba(15,23,42,.04);}
+    div[data-testid="stMetricLabel"] {color:#64748b !important; font-weight:650;} div[data-testid="stMetricValue"] {color:#0f172a; font-weight:800; letter-spacing:-.5px;}
+    div[data-baseweb="tab-list"] {gap:5px; border-bottom:1px solid var(--line);} button[data-baseweb="tab"] {border-radius:10px 10px 0 0; padding-left:12px; padding-right:12px; font-weight:650;}
+    div.stButton>button, div[data-testid="stDownloadButton"]>button {width:100%; border-radius:13px; min-height:46px; font-weight:750; border:1px solid #dbe1eb; box-shadow:0 4px 14px rgba(15,23,42,.045); transition:.14s ease;}
+    div.stButton>button:hover, div[data-testid="stDownloadButton"]>button:hover {transform:translateY(-1px); box-shadow:0 8px 20px rgba(15,23,42,.075); border-color:#b8c2d1;}
+    div.stButton>button[kind="primary"] {color:white; border:none; background:linear-gradient(135deg,#5b5cf0 0%,#7c3aed 100%); box-shadow:0 9px 24px rgba(91,92,240,.24);}
+    div[data-testid="stFileUploaderDropzone"] {border-radius:16px; border:1px dashed #b8c2d1; background:rgba(255,255,255,.66);}
+    textarea,input {border-radius:13px !important;} div[role="radiogroup"] {gap:7px; flex-wrap:wrap;} div[role="radiogroup"] label {background:rgba(255,255,255,.80); border:1px solid var(--line); padding:7px 11px; border-radius:999px;}
+    div[data-testid="stAlert"] {border-radius:14px; border-width:1px;} div[data-testid="stJson"] {border:1px solid var(--line); border-radius:16px; overflow:hidden; background:rgba(255,255,255,.9);}
+    h1,h2,h3,h4 {letter-spacing:-.35px;} hr {margin:2.1rem 0 1.5rem 0 !important; border-color:#e8edf4 !important;}
+    @media (max-width:900px) {
+        .block-container {padding:1.1rem 1.15rem 4rem 1.15rem;} .hero {padding:28px 25px; border-radius:21px;} .hero h1 {font-size:38px; letter-spacing:-1.2px;} .workflow-strip {grid-template-columns:repeat(3,1fr);} div[data-testid="stMetric"] {min-height:96px;}
     }
-    .hero h1 {
-        margin: 0;
-        font-size: 42px;
-        font-weight: 800;
-        letter-spacing: -1.2px;
-    }
-    .hero p {
-        margin-top: 10px;
-        margin-bottom: 0;
-        color: #d1d5db;
-        font-size: 16px;
-        max-width: 900px;
-    }
-    .section-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px;
-        padding: 22px;
-        box-shadow: 0 5px 20px rgba(15,23,42,0.04);
-        margin-bottom: 14px;
-    }
-    .summary-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid #e2e8f0;
-        border-left: 5px solid #4f46e5;
-        border-radius: 16px;
-        padding: 22px 24px;
-        margin-bottom: 20px;
-    }
-    .feature-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 16px;
-        padding: 18px;
-        min-height: 150px;
-        box-shadow: 0 5px 16px rgba(15,23,42,0.04);
-        margin-bottom: 12px;
-    }
-    .feature-title {
-        font-size: 17px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        color: #111827;
-    }
-    .feature-description {
-        color: #4b5563;
-        font-size: 14px;
-        line-height: 1.55;
-        margin-top: 10px;
-    }
-    .priority-high, .priority-medium, .priority-low {
-        display: inline-block;
-        padding: 4px 9px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-    }
-    .priority-high { background: #fee2e2; color: #991b1b; }
-    .priority-medium { background: #fef3c7; color: #92400e; }
-    .priority-low { background: #dcfce7; color: #166534; }
-    .story-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 16px;
-        padding: 18px 20px;
-        margin-bottom: 12px;
-    }
-    .story-id {
-        color: #4f46e5;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.6px;
-    }
-    .story-role {
-        margin-top: 8px;
-        font-size: 15px;
-        font-weight: 700;
-        color: #111827;
-    }
-    .story-line {
-        color: #475569;
-        margin-top: 6px;
-        font-size: 14px;
-    }
-    .empty-box {
-        background: #f8fafc;
-        border: 1px dashed #cbd5e1;
-        border-radius: 14px;
-        padding: 18px;
-        color: #64748b;
-    }
-    .draft-notice {
-        background: #fffbeb;
-        color: #92400e;
-        border: 1px solid #fde68a;
-        border-radius: 14px;
-        padding: 13px 16px;
-        font-size: 14px;
-        margin-bottom: 20px;
-    }
-    .runtime-box {
-        background: rgba(255,255,255,0.07);
-        border: 1px solid rgba(255,255,255,0.10);
-        border-radius: 14px;
-        padding: 14px;
-        margin-bottom: 12px;
-    }
-    .runtime-label {
-        color: #9ca3af;
-        font-size: 12px;
-        margin-bottom: 3px;
-    }
-    .runtime-value {
-        color: white;
-        font-weight: 700;
-        font-size: 14px;
-    }
-    .evidence-card {
-        background: #ffffff;
-        border: 1px solid #dbeafe;
-        border-left: 5px solid #2563eb;
-        border-radius: 14px;
-        padding: 16px 18px;
-        margin-bottom: 12px;
-    }
-    .mode-note {
-        background: #eef2ff;
-        border: 1px solid #c7d2fe;
-        border-radius: 14px;
-        padding: 14px 16px;
-        margin-bottom: 15px;
-        color: #3730a3;
-    }
-    div.stButton > button {
-        width: 100%;
-        border-radius: 12px;
-        min-height: 48px;
-        font-weight: 700;
-        border: none;
-    }
-    textarea {
-        border-radius: 14px !important;
+    @media (max-width:640px) {
+        .block-container {padding:.75rem .85rem 3.5rem .85rem;} .hero {padding:23px 19px; border-radius:18px; margin-bottom:14px;} .hero h1 {font-size:32px; line-height:1.08;} .hero p {font-size:14px; line-height:1.58;} .hero-badge {font-size:10px; padding:6px 9px;} .hero-chip {width:100%; justify-content:center;} .workflow-strip {grid-template-columns:repeat(2,1fr); gap:6px;} .workflow-step {font-size:11px; padding:10px 7px;} .draft-notice,.mode-note {font-size:12px;} div[data-baseweb="tab-list"] {overflow-x:auto; flex-wrap:nowrap;} button[data-baseweb="tab"] {white-space:nowrap; min-width:max-content;} section[data-testid="stSidebar"] {min-width:275px !important; max-width:290px !important;}
     }
     </style>
     """,
@@ -274,19 +166,25 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.caption("Day 5 • Integrated DevFlow Copilot MVP")
+    st.caption("Local-first GenAI Engineering Workspace")
 
 
 render_html(
     """
     <div class="hero">
-        <div class="hero-badge">DAY 5 • INTEGRATED DEVFLOW COPILOT MVP</div>
+        <div class="hero-badge">⚡ LOCAL-FIRST • MULTIMODAL • HUMAN-IN-THE-LOOP</div>
         <h1>DevFlow Copilot</h1>
         <p>
-            Turn client text and UI screenshots into a schema-validated specification,
-            engineering artifacts, a deterministic reliability report, and a human-reviewed
-            export package — fully local and without a paid API.
+            Transform client requirements and UI screenshots into structured specifications,
+            engineering-ready artifacts, reliability checks, and review-approved export packages
+            — all in one focused workspace.
         </p>
+        <div class="hero-meta">
+            <span class="hero-chip">🧠 Local AI</span>
+            <span class="hero-chip">🖼 Multimodal Analysis</span>
+            <span class="hero-chip">🧪 Deterministic Evaluation</span>
+            <span class="hero-chip">✅ Human Approval</span>
+        </div>
     </div>
     """
 )
@@ -301,10 +199,23 @@ render_html(
     """
 )
 
-st.markdown("## Input")
+render_html(
+    """
+    <div class="workflow-strip">
+        <div class="workflow-step">01 · Input</div>
+        <div class="workflow-step">02 · Specification</div>
+        <div class="workflow-step">03 · Engineering</div>
+        <div class="workflow-step">04 · Reliability</div>
+        <div class="workflow-step">05 · Review</div>
+        <div class="workflow-step">06 · Export</div>
+    </div>
+    """
+)
+
+st.markdown("## Start with your evidence")
 
 mode = st.radio(
-    "Choose evidence source",
+    "Evidence source",
     ["Text only", "Image only", "Text + Image"],
     horizontal=True,
 )
@@ -353,7 +264,7 @@ with left:
             )
 
 with right:
-    st.markdown("### Day 2 analysis")
+    st.markdown("### Evidence Intelligence")
     render_html(
         """
         <div class="section-card">
@@ -558,7 +469,7 @@ result = st.session_state.specification
 
 if result is not None:
     st.markdown("---")
-    st.markdown("## Generated Specification")
+    st.markdown("## Validated Specification")
 
     metric1, metric2, metric3, metric4 = st.columns(4)
     metric1.metric("Features", len(result.features))
@@ -650,7 +561,7 @@ if result is not None:
 
 if result is not None:
     st.markdown("---")
-    st.markdown("## Day 3 — Engineering Artifacts")
+    st.markdown("## Engineering Artifacts")
 
     render_html(
         """
@@ -913,7 +824,7 @@ if engineering is not None:
 
 if result is not None and engineering is not None:
     st.markdown("---")
-    st.markdown("## Day 4 — Reliability & Evaluation")
+    st.markdown("## Reliability & Quality")
 
     render_html(
         """
@@ -1096,7 +1007,7 @@ if reliability is not None:
 
 if result is not None and engineering is not None and reliability is not None:
     st.markdown("---")
-    st.markdown("## Day 5 — Human Review & Final Export")
+    st.markdown("## Human Review & Final Export")
 
     render_html(
         """
@@ -1261,7 +1172,7 @@ if result is not None and engineering is not None and reliability is not None:
             "No human review actions have been recorded yet."
         )
 
-    st.markdown("### Final Export")
+    st.markdown("### Export Package")
 
     if review.status == ReviewStatus.APPROVED:
         try:
@@ -1335,6 +1246,6 @@ if result is not None and engineering is not None and reliability is not None:
 
 st.markdown("---")
 st.caption(
-    "MoinSystems AI • DevFlow Copilot • Day 5 Integrated Local-first GenAI MVP • "
+    "MoinSystems AI • DevFlow Copilot • Local-first GenAI Engineering Workspace • "
     "Multimodal Requirements • Engineering Artifacts • Reliability • Human Review • Export"
 )
