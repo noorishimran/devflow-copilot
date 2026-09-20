@@ -28,4 +28,4 @@ Thumbs.db
 *.log
 
 # Temporary files
-*.tmp
+*.tmpdata/*.db
